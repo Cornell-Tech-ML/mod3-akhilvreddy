@@ -68,15 +68,10 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
-    # remaining = ordinal
-    # for i in range(shape.size - 1, -1, -1):  # Iterate backwards without using 'reversed'
-    #     out_index[i] = remaining % shape[i]
-    #     remaining = remaining // shape[i]
-
-    for i in range(len(shape)):
-        divisor = np.prod(shape[i + 1 :])  # Compute the product of remaining dimensions
-        out_index[i] = (ordinal // divisor) % shape[i]
-
+    remaining = ordinal
+    for i in range(shape.size - 1, -1, -1):  # Iterate backwards without using 'reversed'
+        out_index[i] = remaining % shape[i]
+        remaining = remaining // shape[i]
 
     # TODO: Implement for Task 2.1.
     # raise NotImplementedError("Need to implement for Task 2.1")
