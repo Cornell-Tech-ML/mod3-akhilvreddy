@@ -4,6 +4,7 @@
 from typing import Callable, Optional, TypeVar, Any
 
 import numba
+import math
 from numba import cuda
 from numba.cuda import jit as _jit
 from .tensor import Tensor
