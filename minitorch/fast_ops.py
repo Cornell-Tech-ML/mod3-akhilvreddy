@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar, Any
 
 import numpy as np
+import math
 from numba import prange
 from numba import njit as _njit
 
