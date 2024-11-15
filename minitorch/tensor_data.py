@@ -73,10 +73,9 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
     #     out_index[i] = remaining % shape[i]
     #     remaining = remaining // shape[i]
 
-    temp = ordinal
-    for i in range(len(shape) - 1, -1, -1):  # Iterate backwards
-        out_index[i] = temp % shape[i]
-        temp //= shape[i]  # Update temp instead of a shared variable
+    for i in range(len(shape)):
+        divisor = np.prod(shape[i + 1 :])  # Compute the product of remaining dimensions
+        out_index[i] = (ordinal // divisor) % shape[i]
 
 
     # TODO: Implement for Task 2.1.
