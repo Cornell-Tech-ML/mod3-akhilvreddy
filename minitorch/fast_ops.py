@@ -169,7 +169,13 @@ def tensor_map(
 
                 out_pos = index_to_position(out_index, out_strides)
 
-                if all(0 <= in_index[d] < in_shape[d] for d in range(len(in_shape))):
+                valid = True
+                for d in range(len(in_shape)):
+                    if not (0 <= in_index[d] < in_shape[d]):
+                        valid = False
+                        break
+
+                if valid:
                     in_pos = index_to_position(in_index, in_strides)
                     out[out_pos] = fn(in_storage[in_pos])
 
