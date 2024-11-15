@@ -286,12 +286,12 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     cuda.syncthreads()
 
     # Perform parallel reduction within the block
-    stride = 1
-    while stride < BLOCK_DIM:
-        if pos % (2 * stride) == 0 and pos + stride < BLOCK_DIM:
+    stride = BLOCK_DIM // 2
+    while stride > 0:
+        if pos < stride and i + stride < size:
             cache[pos] += cache[pos + stride]
         cuda.syncthreads()
-        stride *= 2
+        stride //= 2
 
     # The first thread in each block writes the result to the output
     if pos == 0:
