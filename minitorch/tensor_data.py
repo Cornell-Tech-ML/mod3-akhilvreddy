@@ -68,10 +68,11 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
-    remaining = ordinal
-    for i in range(shape.size - 1, -1, -1):  # Iterate backwards without using 'reversed'
-        out_index[i] = remaining % shape[i]
-        remaining = remaining // shape[i]
+    cur_ord = ordinal + 0
+    for i in range(len(shape) - 1, -1, -1):
+        sh = shape[i]
+        out_index[i] = int(cur_ord % sh)
+        cur_ord //= sh
 
     # TODO: Implement for Task 2.1.
     # raise NotImplementedError("Need to implement for Task 2.1")
