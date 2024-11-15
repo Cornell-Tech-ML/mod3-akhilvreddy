@@ -75,9 +75,6 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index[i] = int(cur_ord % sh)
         cur_ord //= sh
 
-    # TODO: Implement for Task 2.1.
-    # raise NotImplementedError("Need to implement for Task 2.1")
-
 
 def broadcast_index(
     big_index: Index, big_shape: Shape, shape: Shape, out_index: OutIndex

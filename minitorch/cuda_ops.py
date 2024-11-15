@@ -405,47 +405,30 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         size (int): size of the square
 
     """
-    BLOCK_DIM = 32
+    i = cuda.threadIdx.x
+    j = cuda.threadIdx.y
 
-    # Allocate shared memory for `a` and `b` blocks
-    a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    # Shared memory for a and b matrices
+    shared_a = cuda.shared.array((MAX_DIMS, MAX_DIMS), numba.float32)
+    shared_b = cuda.shared.array((MAX_DIMS, MAX_DIMS), numba.float32)
 
-    # Calculate row and column indexes in the output matrix
-    row = cuda.threadIdx.y
-    col = cuda.threadIdx.x
-    block_row = cuda.blockIdx.y * BLOCK_DIM
-    block_col = cuda.blockIdx.x * BLOCK_DIM
+    # Load data into shared memory if within bounds
+    if i < size and j < size:
+        shared_a[i, j] = a[i * size + j]
+        shared_b[i, j] = b[i * size + j]
 
-    # Initialize the output value
-    temp_sum = 0.0
+    # Ensure all threads have loaded data
+    cuda.syncthreads()
 
-    # Loop over each sub-matrix in `a` and `b` for block multiplication
-    for m in range((size + BLOCK_DIM - 1) // BLOCK_DIM):
-        # Load data from global memory to shared memory
-        if block_row + row < size and m * BLOCK_DIM + col < size:
-            a_shared[row, col] = a[(block_row + row) * size + (m * BLOCK_DIM + col)]
-        else:
-            a_shared[row, col] = 0.0
+    # Only compute if within bounds
+    if i < size and j < size:
+        # Compute dot product for this element
+        acc = 0.0
+        for k in range(size):
+            acc += shared_a[i, k] * shared_b[k, j]
 
-        if m * BLOCK_DIM + row < size and block_col + col < size:
-            b_shared[row, col] = b[(m * BLOCK_DIM + row) * size + (block_col + col)]
-        else:
-            b_shared[row, col] = 0.0
-
-        # Synchronize to make sure the data is loaded
-        cuda.syncthreads()
-
-        # Perform the multiplication and accumulate the result
-        for k in range(BLOCK_DIM):
-            temp_sum += a_shared[row, k] * b_shared[k, col]
-
-        # Synchronize to ensure all threads have completed the computation
-        cuda.syncthreads()
-
-    # Write the result to global memory
-    if block_row + row < size and block_col + col < size:
-        out[(block_row + row) * size + (block_col + col)] = temp_sum
+        # Write result to global memory
+        out[i * size + j] = acc
 
 
 jit_mm_practice = cuda.jit(_mm_practice)
@@ -493,75 +476,67 @@ def _tensor_matrix_multiply(
     """
     a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
     b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
-    # Batch dimension - fixed
     batch = cuda.blockIdx.z
 
-    BLOCK_DIM = 32
-    a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    # Get thread indices
+    tx = cuda.threadIdx.x
+    ty = cuda.threadIdx.y
 
-    # The final position c[i, j]
-    i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    j = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    # Get block indices
+    bx = cuda.blockIdx.x
+    by = cuda.blockIdx.y
 
-    # The local position in the block.
-    pi = cuda.threadIdx.x
-    pj = cuda.threadIdx.y
+    # Calculate global row and column
+    row = by * cuda.blockDim.y + ty
+    col = bx * cuda.blockDim.x + tx
 
-    # Initialize the accumulation register
-    c_sum = 0.0
+    # Define tile size
+    TILE_SIZE = 32
 
-    # Assuming the last two dimensions are the matrix dimensions
-    M = a_shape[-2]
-    K = a_shape[-1]
-    N = b_shape[-1]
+    # Allocate shared memory for tiles
+    tile_a = cuda.shared.array((TILE_SIZE, TILE_SIZE), numba.float64)
+    tile_b = cuda.shared.array((TILE_SIZE, TILE_SIZE), numba.float64)
 
-    # Calculate the number of tiles
-    num_tiles = math.ceil(K / BLOCK_DIM)
+    # Initialize accumulator
+    acc = 0.0
 
-    # Calculate batch offsets with broadcasting
-    a_batch_offset = batch * a_batch_stride
-    b_batch_offset = batch * b_batch_stride
-
-    for tile in range(num_tiles):
-        # Calculate the global k index for this tile
-        k = tile * BLOCK_DIM + pi
-
-        # Load a_shared
-        if (i < M) and (k < K):
-            a_index = a_batch_offset
-            # Calculate the multi-dimensional index for a
-            a_index += (i * a_strides[-2] + k * a_strides[-1])
-            a_shared[pi, pj] = a_storage[a_index]
+    # Loop over tiles
+    for t in range((a_shape[2] + TILE_SIZE - 1) // TILE_SIZE):
+        # Load data into shared memory tiles
+        if row < a_shape[1] and t * TILE_SIZE + tx < a_shape[2]:
+            a_pos = (
+                batch * a_batch_stride
+                + row * a_strides[1]
+                + (t * TILE_SIZE + tx) * a_strides[2]
+            )
+            tile_a[ty, tx] = a_storage[a_pos]
         else:
-            a_shared[pi, pj] = 0.0  # Padding with zero for out-of-bounds
+            tile_a[ty, tx] = 0.0
 
-        # Load b_shared
-        k_b = tile * BLOCK_DIM + pj
-        if (k_b < K) and (j < N):
-            b_index = b_batch_offset
-            # Calculate the multi-dimensional index for b
-            b_index += (k_b * b_strides[-2] + j * b_strides[-1])
-            b_shared[pi, pj] = b_storage[b_index]
+        if t * TILE_SIZE + ty < b_shape[1] and col < b_shape[2]:
+            b_pos = (
+                batch * b_batch_stride
+                + (t * TILE_SIZE + ty) * b_strides[1]
+                + col * b_strides[2]
+            )
+            tile_b[ty, tx] = b_storage[b_pos]
         else:
-            b_shared[pi, pj] = 0.0  # Padding with zero for out-of-bounds
+            tile_b[ty, tx] = 0.0
 
-        # Synchronize to make sure the tiles are loaded
+        # Synchronize threads
         cuda.syncthreads()
 
-        # Perform the multiplication for this tile
-        for t in range(BLOCK_DIM):
-            c_sum += a_shared[pi, t] * b_shared[t, pj]
+        # Compute partial dot product for this tile
+        if row < out_shape[1] and col < out_shape[2]:
+            for k in range(min(TILE_SIZE, a_shape[2] - t * TILE_SIZE)):
+                acc += tile_a[ty, k] * tile_b[k, tx]
 
-        # Synchronize before loading the next tile
+        # Synchronize before loading next tile
         cuda.syncthreads()
 
-    # Write the result to global memory
-    if (i < M) and (j < N):
-        out_index = batch
-        # Calculate the multi-dimensional index for out
-        out_index += (i * out_strides[-2] + j * out_strides[-1])
-        out[out_index] = c_sum
-
+    # Write final result to global memory
+    if row < out_shape[1] and col < out_shape[2]:
+        out_pos = batch * out_strides[0] + row * out_strides[1] + col * out_strides[2]
+        out[out_pos] = acc
 
 tensor_matrix_multiply = jit(_tensor_matrix_multiply)
