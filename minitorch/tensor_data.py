@@ -68,10 +68,16 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
-    remaining = ordinal
-    for i in range(shape.size - 1, -1, -1):  # Iterate backwards without using 'reversed'
-        out_index[i] = remaining % shape[i]
-        remaining = remaining // shape[i]
+    # remaining = ordinal
+    # for i in range(shape.size - 1, -1, -1):  # Iterate backwards without using 'reversed'
+    #     out_index[i] = remaining % shape[i]
+    #     remaining = remaining // shape[i]
+
+    temp = ordinal
+    for i in range(len(shape) - 1, -1, -1):  # Iterate backwards
+        out_index[i] = temp % shape[i]
+        temp //= shape[i]  # Update temp instead of a shared variable
+
 
     # TODO: Implement for Task 2.1.
     # raise NotImplementedError("Need to implement for Task 2.1")
