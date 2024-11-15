@@ -68,6 +68,7 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
+
     cur_ord = ordinal + 0
     for i in range(len(shape) - 1, -1, -1):
         sh = shape[i]
