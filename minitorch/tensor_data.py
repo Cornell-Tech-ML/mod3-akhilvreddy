@@ -100,14 +100,20 @@ def broadcast_index(
     """
     # TODO: Implement for Task 2.2.
 
-    padded_shape = [1] * (len(big_shape) - len(shape)) + list(shape)
+    dim_big = big_shape.size
+    dim_out = shape.size
+    pad = dim_big - dim_out
 
-    out_dim = len(out_index)  # Track current dimension of out_index
-    for i in range(len(big_shape) - len(shape), len(big_shape)):
-        if padded_shape[i] == 1:
-            out_index[i - (len(big_shape) - out_dim)] = 0
+    # Iterate over each dimension of the output tensor
+    for i in range(dim_out):
+        big_dim = i + pad  # Corresponding dimension in the big tensor
+
+        if shape[i] == 1:
+            # If the dimension in the smaller tensor is 1, set index to 0 (broadcasted)
+            out_index[i] = 0
         else:
-            out_index[i - (len(big_shape) - out_dim)] = big_index[i]
+            # Otherwise, copy the index from the big tensor
+            out_index[i] = big_index[big_dim]
 
     # raise NotImplementedError("Need to implement for Task 2.2")
 
