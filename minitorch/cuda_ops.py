@@ -30,11 +30,41 @@ FakeCUDAKernel = Any
 Fn = TypeVar("Fn")
 
 
-def device_jit(fn: Fn, **kwargs) -> Fn:
+def device_jit(fn: Fn, **kwargs: Any) -> Fn:
+    """
+    A decorator to enable just-in-time (JIT) compilation for device-specific operations.
+
+    This function wraps another function and applies JIT compilation with device-specific
+    optimizations (e.g., GPU acceleration). It uses `_jit` with the `device=True` flag to 
+    indicate that the function is intended to run on a device (e.g., CUDA-enabled GPU).
+
+    Args:
+        fn (Fn): The function to be JIT-compiled.
+        **kwargs: Additional keyword arguments passed to the `_jit` function.
+
+    Returns:
+        Fn: The JIT-compiled version of the input function.
+    """
     return _jit(device=True, **kwargs)(fn)  # type: ignore
 
 
-def jit(fn, **kwargs) -> FakeCUDAKernel:
+def jit(fn, **kwargs: Any) -> FakeCUDAKernel:
+    """
+    A decorator to enable just-in-time (JIT) compilation for general operations.
+
+    This function wraps another function and applies JIT compilation using the `_jit`
+    mechanism. The `kwargs` parameter allows customization of the JIT behavior, such
+    as enabling specific optimizations or setting compilation parameters.
+
+    Args:
+        fn: The function to be JIT-compiled.
+        **kwargs (Any): Additional keyword arguments passed to the `_jit` function 
+            to customize the JIT compilation process.
+
+    Returns:
+        FakeCUDAKernel: A JIT-compiled version of the input function, represented
+        as a `FakeCUDAKernel` object.
+    """
     return _jit(**kwargs)(fn)  # type: ignore
 
 
