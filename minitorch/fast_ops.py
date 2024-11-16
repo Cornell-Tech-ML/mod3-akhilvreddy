@@ -29,6 +29,29 @@ Fn = TypeVar("Fn")
 
 
 def njit(fn: Fn, **kwargs: Any) -> Fn:
+    """
+    Applies just-in-time (JIT) compilation to a function with specific optimizations.
+
+    This function wraps another function `fn` and compiles it using `_njit`. The
+    JIT compilation improves performance by converting the Python function into
+    optimized machine code at runtime. The `inline="always"` argument ensures that 
+    the compiled function is inlined wherever possible for better efficiency.
+
+    Args:
+        fn (Fn): The function to be JIT-compiled.
+        **kwargs (Any): Additional keyword arguments passed to `_njit`, allowing 
+            customization of the JIT compilation process.
+
+    Returns:
+        Fn: The JIT-compiled version of the input function.
+
+    Notes:
+        - This function is particularly useful for optimizing performance-intensive
+          numerical operations or tensor computations.
+        - The `inline="always"` setting enhances performance by reducing function 
+          call overhead during execution.
+        - The `_njit` mechanism may require specific dependencies (e.g., CUDA, Numba).
+    """
     return _njit(inline="always", **kwargs)(fn)  # type: ignore
 
 
