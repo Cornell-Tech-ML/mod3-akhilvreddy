@@ -222,12 +222,24 @@ def tensor_zip(
 
                 out_pos = index_to_position(out_index, out_strides)
 
-                if all(
-                    0 <= a_index[d] < a_shape[d] for d in range(len(a_shape))
-                ) and all(0 <= b_index[d] < b_shape[d] for d in range(len(b_shape))):
+                # Replace 'all' with explicit loop checks
+                a_valid = True
+                for d in range(len(a_shape)):
+                    if not (0 <= a_index[d] < a_shape[d]):
+                        a_valid = False
+                        break
+
+                b_valid = True
+                for d in range(len(b_shape)):
+                    if not (0 <= b_index[d] < b_shape[d]):
+                        b_valid = False
+                        break
+
+                if a_valid and b_valid:
                     a_pos = index_to_position(a_index, a_strides)
                     b_pos = index_to_position(b_index, b_strides)
                     out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
+                    # just to make a new commit
 
     return njit(_zip, parallel=True)
 
@@ -261,7 +273,15 @@ def tensor_reduce(
 
             for j in range(reduce_size):
                 a_index[reduce_dim] = j
-                if all(0 <= a_index[d] < a_shape[d] for d in range(len(a_shape))):
+
+                # Replace 'all' with explicit loop
+                valid_index = True
+                for d in range(len(a_shape)):
+                    if not (0 <= a_index[d] < a_shape[d]):
+                        valid_index = False
+                        break
+
+                if valid_index:
                     a_pos = index_to_position(a_index, a_strides)
                     out[out_pos] = fn(out[out_pos], a_storage[a_pos])
 
