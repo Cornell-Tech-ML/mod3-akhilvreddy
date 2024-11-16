@@ -1,6 +1,5 @@
 import random
 import minitorch
-
 import numba
 datasets = minitorch.datasets
 FastTensorBackend = minitorch.TensorBackend(minitorch.FastOps)
@@ -43,7 +42,7 @@ class Linear(minitorch.Module):
 
     def forward(self, x):
         # TODO: Implement for Task 3.5.
-        raise (x @ self.weights.value) + self.bias.value
+        return (x @ self.weights.value) + self.bias.value
 
 
 class FastTrain:
