@@ -35,13 +35,13 @@ The files that will be synced are:
 
 ## Training With CPU
 
-First, I trained the 'split' dataset with the following hyperparameters: 
+First, I trained the 'split' dataset with the following hyperparameters:
 
 ```
 python run_fast_tensor.py --BACKEND cpu --HIDDEN 100 --DATASET split --RATE 0.05
 ```
 
-This resulted in the following logs: 
+This resulted in the following logs:
 
 ```
 Epoch  10  loss  4.796329464539841 correct 41
@@ -96,7 +96,7 @@ Epoch  490  loss  0.05214814642605661 correct 50
 Epoch  500  loss  0.03721497088592909 correct 50
 ```
 
-We can see that it classified 50/50 correctly, with a training time of 104.98 seconds and an average time per epoch is 0.21 seconds. 
+We can see that it classified 50/50 correctly, with a training time of 104.98 seconds and an average time per epoch is 0.21 seconds.
 
 ---
 
@@ -106,7 +106,7 @@ The next dataset I trained was 'xor' with the following hyperparameters:
 python run_fast_tensor.py --BACKEND cpu --HIDDEN 100 --DATASET xor --RATE 0.05
 ```
 
-This resulted in the following logs: 
+This resulted in the following logs:
 
 ```
 Epoch  10  loss  5.556472348667344 correct 45
@@ -161,7 +161,7 @@ Epoch  490  loss  1.3920806140399643 correct 49
 Epoch  500  loss  1.369289573812158 correct 50
 ```
 
-This classified 50/50 correctly, with a training time of 103.92 seconds and an average time per epoch of 0.20784 seconds. 
+This classified 50/50 correctly, with a training time of 103.92 seconds and an average time per epoch of 0.20784 seconds.
 
 ## Training With GPU
 Similar to the CPU case, I trained my GPU based models with the split and xor data set with the same hyperparameters.
@@ -172,7 +172,7 @@ For the split case, I used the following command with these hyperparameters:
 python run_fast_tensor.py --BACKEND gpu --HIDDEN 100 --DATASET split --RATE 0.05
 ```
 
-which gave me the following logs: 
+which gave me the following logs:
 
 ```
 Epoch  10  loss  7.019764740021523 correct 26
@@ -227,18 +227,18 @@ Epoch  490  loss  0.05471673228268411 correct 46
 Epoch  500  loss  0.0268411547130735 correct 47
 ```
 
-This classified 47/50 correctly, with a training time of 73.29 seconds and an average time per epoch of 0.14658 seconds. 
+This classified 47/50 correctly, with a training time of 73.29 seconds and an average time per epoch of 0.14658 seconds.
 
-As we can see, training with a GPU is much faster than training with a CPU. The drop in accuracy could be correlated with slight errors in 'matmul'. 
+As we can see, training with a GPU is much faster than training with a CPU. The drop in accuracy could be correlated with slight errors in 'matmul'.
 
---- 
-I then moved on to the xor case with the same hyperparameters. 
+---
+I then moved on to the xor case with the same hyperparameters.
 
 ```
 python run_fast_tensor.py --BACKEND gpu --HIDDEN 100 --DATASET split --RATE 0.05
 ```
 
-which gave me the following logs: 
+which gave me the following logs:
 
 ```
 Epoch 10  loss 6.803629338296769 correct 15
@@ -293,4 +293,4 @@ Epoch 490  loss 0.586447477336259 correct 47
 Epoch 500  loss 0.586447477336259 correct 47
 ```
 
-This classified 47/50 correctly, with a training time of 80.46 seconds and an average time per epoch of 0.16092 seconds. 
+This classified 47/50 correctly, with a training time of 80.46 seconds and an average time per epoch of 0.16092 seconds.
